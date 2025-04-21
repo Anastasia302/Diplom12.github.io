@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Календарь на 2025 год</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden; /* Предотвращает горизонтальную прокрутку */
+        }
+
+        header {
+            background-color: transparent;
+            padding: 5px 0;
+            width: 100%;
+            display: flex; 
+            justify-content: center; 
+            position: fixed;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .title {
+            background-color: #007BFF;
+            color: white;
+            padding: 5px 10px; /* Уменьшено padding для мобильных устройств */
+            border-radius: 50px; 
+            font-size: 2rem; /* Уменьшен размер шрифта */
+            max-width: 90%; 
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+        }
+
+        .menu-icon {
+            position: absolute;
+            top: 15px; 
+            left: 10px; 
+            width: 40px; 
+            height: 40px; 
+            background-color: #007BFF; 
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            z-index: 1100;
+        }
+
+        .sidebar {
+            width: 250px; /* Уменьшена ширина бокового меню */
+        }
+
+        .sidebar button {
+            padding: 10px; 
+            font-size: 1.2rem; /* Уменьшен размер шрифта */
+        }
+
+        .month-container {
+            margin-top: 70px; /* Уменьшен отступ сверху для мобильных */
+            width: 100%;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .month {
+            flex-basis: calc(50% - 10px); /* Установлено для двух месяцев в строке с меньшими отступами */
+            margin: 5px; /* Уменьшен отступ между месяцами */
+            padding: 10px; /* Уменьшен padding внутри */
+            min-width: 300px; /* Минимальная ширина для удобства чтения */
+            background-color: white;
+            border-radius: 14px;
+            box-shadow: 0 2px 14.29px rgba(0, 0, 0, 0.1);
+        }
+
+        .month h2 {
+            font-size: 1.5rem; /* Уменьшен размер шрифта */
+            padding: 10px 0; /* Меньший отступ шапки месяцев */
+            text-align: center;
+        }
+
+        .calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px; /* Меньший отступ между днями */
+        }
+
+        .date-circle {
+            width: 50px; /* Уменьшен размер кружка для даты */
+            height: 50px; 
+            line-height: 50px; 
+            font-size: 1.2rem; /* Уменьшен размер шрифта */
+            text-align: center;
+            border-radius: 50%;
+            background-color: #e0e0e0;
+            margin: 0 auto; /* Центрирование кружка */
+            cursor: pointer;
+        }
+
+        .event-input {
+            padding: 5px; /* Уменьшен padding внутри поля ввода */
+            font-size: 0.8rem; /* Уменьшен размер шрифта */
+            width: 100%; /* Чтобы поле вписалось внутри */
+            border-radius: 4px; 
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+
+        .event-button {
+            padding: 5px; /* Уменьшен padding кнопки добавления */
+            font-size: 0.8rem; /* Уменьшен размер шрифта */
+            cursor: pointer;
+        }
+
+        .scroll-button {
+            width: 40px; /* Уменьшен размер кнопки скролла */
+            height: 40px; 
+            font-size: 1.2rem; /* Уменьшен размер шрифта кнопки скролла */
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="menu-icon" id="menu-icon">
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+        </div>
+        <div class="title">Календарь на 2025 год</div>
+    </header>
+
+    <div class="sidebar" id="sidebar">
+        <button onclick="window.location.href='index.html'">Главная страница</button>
+        <button onclick="window.location.href='account.html'">Аккаунт</button>
+        <button onclick="window.location.href='calendar.html'">Календарь</button>
+        <button onclick="window.location.href='test.html'">Тест</button>
+        <button onclick="window.location.href='honor_board.html'">Доска почета</button>
+        <button onclick="window.location.href='psychologist.html'">Психолог</button>
+        <button onclick="window.location.href='documents.html'">Документы</button>
+        <button onclick="window.location.href='vacation.html'">Отпуск</button>
+        <button onclick="window.location.href='lost_and_found.html'">Потеряшки</button>
+        <button onclick="window.location.href='health.html'">Здоровье</button>
+        <button onclick="window.location.href='offers.html'">Предложения</button>
+    </div>
+
+    <div class="month-container" id="month-container"></div>
+
+    <button class="scroll-button" id="scroll-button">↓</button>
+
+    <script>
+        const monthContainerEl = document.getElementById('month-container');
+        const scrollButton = document.getElementById('scroll-button');
+        const menuIcon = document.getElementById('menu-icon');
+        const sidebar = document.getElementById('sidebar');
+
+        const inputTimeouts = {};
+        const currentDate = new Date();
+        const currentYear = currentDate.getFullYear();
+        const currentMonth = currentDate.getMonth();
+
+        function toggleSidebar() {
+            sidebar.classList.toggle('open');
+        }
+
+        function closeSidebar(event) {
+            if (sidebar.classList.contains('open') && !sidebar.contains(event.target) && !menuIcon.contains(event.target)) {
+                sidebar.classList.remove('open');
+            }
+        }
+
+        menuIcon.addEventListener('click', toggleSidebar);
+        document.addEventListener('click', closeSidebar);
+
+        function renderMonth(monthIndex) {
+            const monthEl = document.createElement('div');
+            monthEl.classList.add('month');
+
+            if (monthIndex === currentMonth) {
+                monthEl.classList.add('current-month');
+            }
+
+            const monthName = new Intl.DateTimeFormat('ru-RU', { month: 'long' }).format(new Date(currentYear, monthIndex));
+            const monthHeader = document.createElement('h2');
+            monthHeader.textContent = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+            monthEl.appendChild(monthHeader);
+
+            const calendarEl = document.createElement('div');
+            calendarEl.classList.add('calendar');
+
+            const firstDay = new Date(currentYear, monthIndex, 1);
+            const lastDay = new Date(currentYear, monthIndex + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            const dayOfWeek = firstDay.getDay() === 0 ? 7 : firstDay.getDay(); // Если воскресенье, устанавливаем 7
+
+            const adjustedFirstDay = (dayOfWeek - 1 + 7) % 7; // Корректируем индексацию для начала с понедельника
+
+            for (let i = 0; i < adjustedFirstDay; i++) {
+                const emptyDay = document.createElement('div');
+                calendarEl.appendChild(emptyDay);
+            }
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayEl = document.createElement('div');
+
+                const dateCircle = document.createElement('div');
+                dateCircle.classList.add('date-circle');
+                dateCircle.textContent = day;
+
+                const eventList = document.createElement('div');
+                eventList.classList.add('event-list');
+
+                const eventInput = document.createElement('input');
+                eventInput.classList.add('event-input');
+                eventInput.placeholder = 'Введите мероприятие';
+
+                const addEventButton = document.createElement('button');
+                addEventButton.classList.add('event-button');
+                addEventButton.textContent = 'Добавить';
+
+                const savedEvents = JSON.parse(localStorage.getItem(`events-${currentYear}-${monthIndex}-${day}`)) || [];
+
+                savedEvents.forEach(eventText => {
+                    const eventItem = document.createElement('div');
+                    eventItem.classList.add('event-item');
+                    eventItem.innerHTML = `
+                        <span style="width: 100%; text-align: justify;">${eventText}</span>
+                        <button class="edit-button" onclick="editEvent('${monthIndex}-${day}', '${eventText}')">...</button>
+                        <button class="delete-button" onclick="deleteEvent('${monthIndex}-${day}', '${eventText}')">×</button>
+                    `;
+                    eventList.appendChild(eventItem);
+                    dateCircle.classList.add('has-event');
+                });
+
+                addEventButton.addEventListener('click', () => {
+                    const eventText = eventInput.value.trim();
+                    if (eventText) {
+                        const eventItem = document.createElement('div');
+                        eventItem.classList.add('event-item');
+                        eventItem.innerHTML = `
+                            <span style="width: 100%; text-align: justify;">${eventText}</span>
+                            <button class="edit-button" onclick="editEvent('${monthIndex}-${day}', '${eventText}')">...</button>
+                            <button class="delete-button" onclick="deleteEvent('${monthIndex}-${day}', '${eventText}')">×</button>
+                        `;
+                        eventList.appendChild(eventItem);
+                        dateCircle.classList.add('has-event');
+
+                        savedEvents.push(eventText);
+                        localStorage.setItem(`events-${currentYear}-${monthIndex}-${day}`, JSON.stringify(savedEvents));
+                        eventInput.value = '';
+                    }
+                });
+
+                eventInput.addEventListener('input', () => {
+                    clearTimeout(inputTimeouts[`${monthIndex}-${day}`]);
+                    inputTimeouts[`${monthIndex}-${day}`] = setTimeout(() => {
+                        eventList.style.display = 'none';
+                    }, 5000); 
+                });
+
+                dateCircle.addEventListener(' () => {
+                    eventList.style.display = (eventList.style.display === 'none' || eventList.style.display === '') ? 'block' : 'none';
+                    clearTimeout(inputTimeouts[`${monthIndex}-${day}`]);
+                    inputTimeouts[`${monthIndex}-${day}`] = setTimeout(() => {
+                         = 'none';
+                    }, 5000);
+                });
+
+                dayEl.appendChild(dateCircle);
+                eventList.appendChild(eventInput);
+                eventList.appendChild(addEventButton);
+                dayEl.appendChild(eventList);
+                calendarEl.appendChild(dayEl);
+            }
+            monthEl.appendChild(calendarEl);
+            monthContainerEl.appendChild(monthEl);
+        }
+
+        function editEvent(date, eventText) {
+            const newEventText = prompt("Измените мероприятие:", eventText);
+            if (newEventText !== null) {
+                const [monthIndex, day] = date.split('-').map(Number);
+                const savedEvents = JSON.parse(localStorage.getItem(`events-${currentYear}-${}-${day}`)) || [];
+                const eventIndex = savedEvents.indexOf(eventText);
+                if (eventIndex >= 0) {
+                    savedEvents[eventIndex] = newEventText;
+                    localStorage.setItem(`events-${currentYear}-${monthIndex}-${day}`, JSON.stringify(savedEvents));
+
+                    monthContainerEl.innerHTML = '';
+                    for (let month = 0; month < 12; month++) {
+                        renderMonth(month);
+                    }
+                    scrollToCurrentMonth();
+                }
+            }
+        }
+
+        function deleteEvent(date, eventText) {
+            const [monthIndex, day] = date.split('-').map(Number);
+            const savedEvents = JSON.parse(localStorage.getItem(`events-${currentYear}-${monthIndex}-${day}`)) || [];
+            const eventIndex = savedEvents.indexOf(eventText);
+            if (eventIndex >= 0) {
+                savedEvents.splice(eventIndex, 1);
+                localStorage.setItem(`events-${currentYear}-${monthIndex}-${day}`, JSON.stringify(savedEvents));
+
+                monthContainerEl.innerHTML = '';
+                for (let month = 0; month < 12; month++) {
+                    renderMonth(month);
+                }
+                scrollToCurrentMonth();
+            }
+        }
+
+        function scrollToCurrentMonth() {
+            const currentMonthElement = document.querySelector('.current-month');
+            if (currentMonthElement) {
+                window.scrollTo({
+                    top: currentMonthElement.getBoundingClientRect().top + window.scrollY - 100,
+                    behavior: 'smooth'
+                });
+            }
+        }
+
+        for (let monthIndex = 0; monthIndex < 12; monthIndex++) {
+            renderMonth(monthIndex);
+        }
+
+        window.addEventListener('load', scrollToCurrentMonth);
+        
+        scrollButton.addEventListener('click', () => {
+            const scrollHeight = document.body.scrollHeight;
+            const clientHeight = window.innerHeight;
+            const isAtBottom = window.scrollY + clientHeight >= scrollHeight - 10;
+
+            if (isAtBottom) {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                scrollButton.innerHTML = '↓';
+            } else {
+                window.scrollTo({ top: scrollHeight, behavior: 'smooth' });
+                scrollButton.innerHTML = '↑';
+            }
+        });
+
+        window.addEventListener('scroll', () => {
+            const scrollHeight = document.body.scrollHeight;
+            const clientHeight = window.innerHeight;
+            const isAtBottom = window.scrollY + clientHeight >= scrollHeight - 10;
+
+            if (isAtBottom) {
+                scrollButton.innerHTML = '↑';
+            } else {
+                scrollButton.innerHTML = '↓';
+            }
+        });
+    </script>
+</body>
+</html>
